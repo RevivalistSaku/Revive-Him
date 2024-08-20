@@ -52,6 +52,86 @@ infiniteYieldButton.Font = Enum.Font.SourceSans
 infiniteYieldButton.TextSize = 20
 infiniteYieldButton.Parent = mainFrame
 
+-- Create the Ultra Instinct button
+local ultraInstinctButton = Instance.new("TextButton")
+ultraInstinctButton.Name = "UltraInstinctButton"
+ultraInstinctButton.Size = UDim2.new(0, 150, 0, 40)
+ultraInstinctButton.Position = UDim2.new(1, -160, 0, 110) -- Below the Infinite Yield button
+ultraInstinctButton.Text = "Ultra Instinct"
+ultraInstinctButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255) -- Blue color
+ultraInstinctButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+ultraInstinctButton.BorderSizePixel = 2
+ultraInstinctButton.BorderColor3 = Color3.fromRGB(255, 255, 255) -- White outline
+ultraInstinctButton.Font = Enum.Font.SourceSansBold
+ultraInstinctButton.TextSize = 20
+ultraInstinctButton.Parent = mainFrame
+
+-- Function to create the Teleport tool
+local function createTeleportTool()
+    local tool = Instance.new("Tool")
+    tool.Name = "Teleport"
+    tool.RequiresHandle = false
+    
+    tool.Activated:Connect(function()
+        local mouse = game.Players.LocalPlayer:GetMouse()
+        if mouse.Target then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.p)
+        end
+    end)
+    
+    tool.Parent = game.Players.LocalPlayer.Backpack
+end
+
+-- Function to create the Counter tool
+local function createCounterTool()
+    local tool = Instance.new("Tool")
+    tool.Name = "Counter"
+    tool.RequiresHandle = false
+    
+    tool.Activated:Connect(function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoidRootPart then
+            local closestPlayer
+            local closestDistance = math.huge
+            
+            for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+                if otherPlayer ~= player then
+                    local otherCharacter = otherPlayer.Character
+                    local otherHumanoidRootPart = otherCharacter and otherCharacter:FindFirstChild("HumanoidRootPart")
+                    
+                    if otherHumanoidRootPart then
+                        local distance = (humanoidRootPart.Position - otherHumanoidRootPart.Position).magnitude
+                        
+                        if distance < closestDistance then
+                            closestDistance = distance
+                            closestPlayer = otherPlayer
+                        end
+                    end
+                end
+            end
+            
+            if closestPlayer then
+                local targetPosition = closestPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2) -- 2 studs behind
+                humanoidRootPart.CFrame = targetPosition
+            end
+        end
+    end)
+    
+    tool.Parent = game.Players.LocalPlayer.Backpack
+end
+
+-- Function to grant the Ultra Instinct tools
+local function grantUltraInstinctTools()
+    createTeleportTool()
+    createCounterTool()
+end
+
+-- Connect the Ultra Instinct button to grant the tools
+ultraInstinctButton.MouseButton1Click:Connect(grantUltraInstinctTools)
+
 -- Function to execute Infinite Yield
 local function loadInfiniteYield()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
@@ -67,3 +147,25 @@ end
 
 -- Connect the open button to the toggle function
 openButton.MouseButton1Click:Connect(toggleGui)
+
+-- Create the MM2 button
+local mm2Button = Instance.new("TextButton")
+mm2Button.Name = "MM2Button"
+mm2Button.Size = UDim2.new(0, 150, 0, 40)
+mm2Button.Position = UDim2.new(1, -160, 0, 160) -- Below the Ultra Instinct button
+mm2Button.Text = "MM2"
+mm2Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red color
+mm2Button.TextColor3 = Color3.fromRGB(0, 0, 0) -- Black text
+mm2Button.BorderSizePixel = 2
+mm2Button.BorderColor3 = Color3.fromRGB(255, 255, 0) -- Yellow outline
+mm2Button.Font = Enum.Font.SourceSansBold
+mm2Button.TextSize = 20
+mm2Button.Parent = mainFrame
+
+-- Function to execute MM2 script
+local function loadMM2()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Joystickplays/psychic-octo-invention/main/yarhm.lua", false))()
+end
+
+-- Connect the MM2 button to the function
+mm2Button.MouseButton1Click:Connect(loadMM2)
