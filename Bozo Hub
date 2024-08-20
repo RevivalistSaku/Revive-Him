@@ -1,0 +1,65 @@
+-- Create the ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BozoHubGui"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Create the button that opens the GUI
+local openButton = Instance.new("TextButton")
+openButton.Name = "OpenButton"
+openButton.Size = UDim2.new(0, 50, 0, 50)  -- Small button
+openButton.Position = UDim2.new(1, -60, 0, 10) -- Top-right corner
+openButton.Text = ""
+openButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255) -- Blue color
+openButton.BorderSizePixel = 0
+openButton.Parent = screenGui
+
+-- Create the main frame of the GUI
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 400, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150) -- Centered
+mainFrame.BackgroundColor3 = Color3.fromRGB(192, 192, 192) -- Silver color
+mainFrame.BorderSizePixel = 3
+mainFrame.BorderColor3 = Color3.fromRGB(0, 0, 0) -- Black outline
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+
+-- Create the heading label
+local heading = Instance.new("TextLabel")
+heading.Name = "Heading"
+heading.Size = UDim2.new(1, 0, 0, 50)
+heading.Position = UDim2.new(0, 0, 0, 0)
+heading.Text = "Bozo Hub"
+heading.BackgroundColor3 = Color3.fromRGB(192, 192, 192) -- Silver color
+heading.TextColor3 = Color3.fromRGB(0, 0, 0) -- Black text
+heading.Font = Enum.Font.SourceSansBold
+heading.TextSize = 30
+heading.Parent = mainFrame
+
+-- Create the Infinite Yield button
+local infiniteYieldButton = Instance.new("TextButton")
+infiniteYieldButton.Name = "InfiniteYieldButton"
+infiniteYieldButton.Size = UDim2.new(0, 150, 0, 40)
+infiniteYieldButton.Position = UDim2.new(1, -160, 0, 60) -- Below the heading, top-right
+infiniteYieldButton.Text = "Infinite Yield"
+infiniteYieldButton.BackgroundColor3 = Color3.fromRGB(128, 128, 128) -- Gray color
+infiniteYieldButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+infiniteYieldButton.Font = Enum.Font.SourceSans
+infiniteYieldButton.TextSize = 20
+infiniteYieldButton.Parent = mainFrame
+
+-- Function to execute Infinite Yield
+local function loadInfiniteYield()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end
+
+-- Connect the Infinite Yield button to the function
+infiniteYieldButton.MouseButton1Click:Connect(loadInfiniteYield)
+
+-- Function to toggle the GUI visibility
+local function toggleGui()
+    mainFrame.Visible = not mainFrame.Visible
+end
+
+-- Connect the open button to the toggle function
+openButton.MouseButton1Click:Connect(toggleGui)
