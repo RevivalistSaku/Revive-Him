@@ -6,21 +6,25 @@ screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 -- Create the button that opens the GUI
 local openButton = Instance.new("TextButton")
 openButton.Name = "OpenButton"
-openButton.Size = UDim2.new(0, 50, 0, 50)  -- Small button
-openButton.Position = UDim2.new(1, -60, 0, 10) -- Top-right corner
-openButton.Text = ""
-openButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255) -- Blue color
-openButton.BorderSizePixel = 0
+openButton.Size = UDim2.new(0, 80, 0, 30)  -- Smaller rectangular button
+openButton.Position = UDim2.new(1, -90, 0, 10) -- Top-right corner
+openButton.Text = "Open GUI"
+openButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black color inside
+openButton.BorderSizePixel = 2
+openButton.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red outline
+openButton.TextColor3 = Color3.fromRGB(255, 0, 0) -- Red text
+openButton.Font = Enum.Font.SourceSansBold
+openButton.TextSize = 18
 openButton.Parent = screenGui
 
 -- Create the main frame of the GUI
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 400, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150) -- Centered
-mainFrame.BackgroundColor3 = Color3.fromRGB(192, 192, 192) -- Silver color
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150) -- Centered on the screen
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black color
 mainFrame.BorderSizePixel = 3
-mainFrame.BorderColor3 = Color3.fromRGB(0, 0, 0) -- Black outline
+mainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red outline
 mainFrame.Visible = false
 mainFrame.Parent = screenGui
 
@@ -30,8 +34,8 @@ heading.Name = "Heading"
 heading.Size = UDim2.new(1, 0, 0, 50)
 heading.Position = UDim2.new(0, 0, 0, 0)
 heading.Text = "Bozo Hub"
-heading.BackgroundColor3 = Color3.fromRGB(192, 192, 192) -- Silver color
-heading.TextColor3 = Color3.fromRGB(0, 0, 0) -- Black text
+heading.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red color
+heading.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
 heading.Font = Enum.Font.SourceSansBold
 heading.TextSize = 30
 heading.Parent = mainFrame
