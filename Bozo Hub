@@ -169,3 +169,11 @@ end
 
 -- Connect the MM2 button to the function
 mm2Button.MouseButton1Click:Connect(loadMM2)
+
+-- Function to make the GUI persist after death
+local function persistGui()
+    screenGui.Parent = game:GetService("CoreGui")
+end
+
+-- Call the function to make the GUI persist
+persistGui()
