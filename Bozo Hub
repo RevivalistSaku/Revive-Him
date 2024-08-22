@@ -2,178 +2,90 @@
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BozoHubGui"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
 
--- Create the button that opens the GUI
-local openButton = Instance.new("TextButton")
-openButton.Name = "OpenButton"
-openButton.Size = UDim2.new(0, 80, 0, 30)  -- Smaller rectangular button
-openButton.Position = UDim2.new(1, -90, 0, 10) -- Top-right corner
-openButton.Text = "Open GUI"
-openButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black color inside
-openButton.BorderSizePixel = 2
-openButton.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red outline
-openButton.TextColor3 = Color3.fromRGB(255, 0, 0) -- Red text
-openButton.Font = Enum.Font.SourceSansBold
-openButton.TextSize = 18
-openButton.Parent = screenGui
-
--- Create the main frame of the GUI
+-- Create the main Frame
 local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 400, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150) -- Centered on the screen
-mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black color
-mainFrame.BorderSizePixel = 3
-mainFrame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red outline
-mainFrame.Visible = false
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(169, 169, 169) -- Transparent grey color
+mainFrame.BackgroundTransparency = 0.5
+mainFrame.BorderColor3 = Color3.fromRGB(0, 0, 0) -- Black outline
+mainFrame.BorderSizePixel = 2
 mainFrame.Parent = screenGui
 
--- Create the heading label
-local heading = Instance.new("TextLabel")
-heading.Name = "Heading"
-heading.Size = UDim2.new(1, 0, 0, 50)
-heading.Position = UDim2.new(0, 0, 0, 0)
-heading.Text = "Bozo Hub"
-heading.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red color
-heading.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
-heading.Font = Enum.Font.SourceSansBold
-heading.TextSize = 30
-heading.Parent = mainFrame
+-- Curved corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12) -- Adjust the curvature as needed
+corner.Parent = mainFrame
 
--- Create the Infinite Yield button
-local infiniteYieldButton = Instance.new("TextButton")
-infiniteYieldButton.Name = "InfiniteYieldButton"
-infiniteYieldButton.Size = UDim2.new(0, 150, 0, 40)
-infiniteYieldButton.Position = UDim2.new(1, -160, 0, 60) -- Below the heading, top-right
-infiniteYieldButton.Text = "Infinite Yield"
-infiniteYieldButton.BackgroundColor3 = Color3.fromRGB(128, 128, 128) -- Gray color
-infiniteYieldButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
-infiniteYieldButton.Font = Enum.Font.SourceSans
-infiniteYieldButton.TextSize = 20
-infiniteYieldButton.Parent = mainFrame
+-- Create the draggable functionality
+mainFrame.Active = true
+mainFrame.Draggable = true
 
--- Create the Ultra Instinct button
+-- Create the header Frame
+local headerFrame = Instance.new("Frame")
+headerFrame.Size = UDim2.new(0, 300, 0, 30)
+headerFrame.Position = UDim2.new(0, 0, 0, 0)
+headerFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Transparent white line color
+headerFrame.BackgroundTransparency = 0.8 -- Makes it mostly transparent
+headerFrame.BorderSizePixel = 0
+headerFrame.Parent = mainFrame
+
+-- Add header text
+local headerText = Instance.new("TextLabel")
+headerText.Size = UDim2.new(0, 100, 1, 0) -- Small header spot
+headerText.Position = UDim2.new(0, 10, 0, 0)
+headerText.BackgroundTransparency = 1
+headerText.Text = "Bozo Hub"
+headerText.TextColor3 = Color3.fromRGB(0, 0, 0) -- Black text
+headerText.Font = Enum.Font.SourceSansBold
+headerText.TextSize = 20
+headerText.TextXAlignment = Enum.TextXAlignment.Left
+headerText.Parent = headerFrame
+
+-- Create the Ultra Instinct Button
 local ultraInstinctButton = Instance.new("TextButton")
-ultraInstinctButton.Name = "UltraInstinctButton"
-ultraInstinctButton.Size = UDim2.new(0, 150, 0, 40)
-ultraInstinctButton.Position = UDim2.new(1, -160, 0, 110) -- Below the Infinite Yield button
+ultraInstinctButton.Size = UDim2.new(0, 120, 0, 30) -- Small button
+ultraInstinctButton.Position = UDim2.new(1, -130, 0, 35) -- Right side under header
+ultraInstinctButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50) -- Dark grey color
+ultraInstinctButton.BorderColor3 = Color3.fromRGB(0, 0, 0) -- Black outline
 ultraInstinctButton.Text = "Ultra Instinct"
-ultraInstinctButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255) -- Blue color
 ultraInstinctButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
-ultraInstinctButton.BorderSizePixel = 2
-ultraInstinctButton.BorderColor3 = Color3.fromRGB(255, 255, 255) -- White outline
 ultraInstinctButton.Font = Enum.Font.SourceSansBold
-ultraInstinctButton.TextSize = 20
+ultraInstinctButton.TextSize = 18
 ultraInstinctButton.Parent = mainFrame
 
--- Function to create the Teleport tool
-local function createTeleportTool()
-    local tool = Instance.new("Tool")
-    tool.Name = "Teleport"
-    tool.RequiresHandle = false
-    
-    tool.Activated:Connect(function()
-        local mouse = game.Players.LocalPlayer:GetMouse()
-        if mouse.Target then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(mouse.Hit.p)
-        end
-    end)
-    
-    tool.Parent = game.Players.LocalPlayer.Backpack
+-- Curved corners for the button
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 8)
+buttonCorner.Parent = ultraInstinctButton
+
+-- Toggle functionality for Ultra Instinct
+local ultraInstinctActive = false
+local function toggleUltraInstinct()
+    ultraInstinctActive = not ultraInstinctActive
+    ultraInstinctButton.Text = ultraInstinctActive and "Active" or "Ultra Instinct"
 end
 
--- Function to create the Counter tool
-local function createCounterTool()
-    local tool = Instance.new("Tool")
-    tool.Name = "Counter"
-    tool.RequiresHandle = false
-    
-    tool.Activated:Connect(function()
+ultraInstinctButton.MouseButton1Click:Connect(toggleUltraInstinct)
+
+-- Ultra Instinct behavior
+game:GetService("RunService").Stepped:Connect(function()
+    if ultraInstinctActive then
         local player = game.Players.LocalPlayer
         local character = player.Character
-        local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if humanoidRootPart then
-            local closestPlayer
-            local closestDistance = math.huge
-            
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local humanoidRootPart = character.HumanoidRootPart
             for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-                if otherPlayer ~= player then
-                    local otherCharacter = otherPlayer.Character
-                    local otherHumanoidRootPart = otherCharacter and otherCharacter:FindFirstChild("HumanoidRootPart")
-                    
-                    if otherHumanoidRootPart then
-                        local distance = (humanoidRootPart.Position - otherHumanoidRootPart.Position).magnitude
-                        
-                        if distance < closestDistance then
-                            closestDistance = distance
-                            closestPlayer = otherPlayer
-                        end
+                if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local distance = (humanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if distance < 4 then
+                        local randomDirection = Vector3.new(math.random(-1, 1), 0, math.random(-1, 1)).unit * 5
+                        humanoidRootPart.CFrame = humanoidRootPart.CFrame + randomDirection
                     end
                 end
             end
-            
-            if closestPlayer then
-                local targetPosition = closestPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2) -- 2 studs behind
-                humanoidRootPart.CFrame = targetPosition
-            end
         end
-    end)
-    
-    tool.Parent = game.Players.LocalPlayer.Backpack
-end
-
--- Function to grant the Ultra Instinct tools
-local function grantUltraInstinctTools()
-    createTeleportTool()
-    createCounterTool()
-end
-
--- Connect the Ultra Instinct button to grant the tools
-ultraInstinctButton.MouseButton1Click:Connect(grantUltraInstinctTools)
-
--- Function to execute Infinite Yield
-local function loadInfiniteYield()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
-end
-
--- Connect the Infinite Yield button to the function
-infiniteYieldButton.MouseButton1Click:Connect(loadInfiniteYield)
-
--- Function to toggle the GUI visibility
-local function toggleGui()
-    mainFrame.Visible = not mainFrame.Visible
-end
-
--- Connect the open button to the toggle function
-openButton.MouseButton1Click:Connect(toggleGui)
-
--- Create the MM2 button
-local mm2Button = Instance.new("TextButton")
-mm2Button.Name = "MM2Button"
-mm2Button.Size = UDim2.new(0, 150, 0, 40)
-mm2Button.Position = UDim2.new(1, -160, 0, 160) -- Below the Ultra Instinct button
-mm2Button.Text = "MM2"
-mm2Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red color
-mm2Button.TextColor3 = Color3.fromRGB(0, 0, 0) -- Black text
-mm2Button.BorderSizePixel = 2
-mm2Button.BorderColor3 = Color3.fromRGB(255, 255, 0) -- Yellow outline
-mm2Button.Font = Enum.Font.SourceSansBold
-mm2Button.TextSize = 20
-mm2Button.Parent = mainFrame
-
--- Function to execute MM2 script
-local function loadMM2()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/Joystickplays/psychic-octo-invention/main/yarhm.lua", false))()
-end
-
--- Connect the MM2 button to the function
-mm2Button.MouseButton1Click:Connect(loadMM2)
-
--- Function to make the GUI persist after death
-local function persistGui()
-    screenGui.Parent = game:GetService("CoreGui")
-end
-
--- Call the function to make the GUI persist
-persistGui()
+    end
+end)
