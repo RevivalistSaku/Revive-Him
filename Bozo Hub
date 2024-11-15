@@ -1,91 +1,57 @@
--- Create the ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "BozoHubGui"
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-screenGui.ResetOnSpawn = false
+import random  
+import time
 
--- Create the main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-mainFrame.BackgroundColor3 = Color3.fromRGB(169, 169, 169) -- Transparent grey color
-mainFrame.BackgroundTransparency = 0.5
-mainFrame.BorderColor3 = Color3.fromRGB(0, 0, 0) -- Black outline
-mainFrame.BorderSizePixel = 2
-mainFrame.Parent = screenGui
+# Define core abilities and their probabilities  
+abilities = {
+    "Commons": [
+        "Light Control", "Dark Control", "Teleportation",
+        "Electric", "Solid Breaker"
+    ],
+    "Uncommon": [
+        "Touch of Midas", "Plasma Annihilator", "Cell Destroyer"
+    ],
+    "Rare": [
+        "World Breaker", "Phantom King", "Devour", 
+        "Chosen Emperor", "Hope"
+    ],
+    "Legendary": [
+        "Reality Maker", "Key of Time", "End of Everything", "Code Unknown"
+    ],
+    "Mythical": [
+        "Hypergod"
+    ]
+}
 
--- Curved corners
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12) -- Adjust the curvature as needed
-corner.Parent = mainFrame
+# Define probabilities  
+probabilities = {
+    "Commons": 0.6,
+    "Uncommon": 0.2,
+    "Rare": 0.05,
+    "Legendary": 0.01,
+    "Mythical": 0.001  
+}
 
--- Create the draggable functionality
-mainFrame.Active = true
-mainFrame.Draggable = true
+# Function to choose a core ability based on defined probabilities  
+def choose_ability():
+    rand = random.random()
+    cumulative_probability = 0.0  
+    for category, prob in probabilities.items():
+        cumulative_probability += prob  
+        if rand < cumulative_probability:
+            return random.choice(abilities[category])
 
--- Create the header Frame
-local headerFrame = Instance.new("Frame")
-headerFrame.Size = UDim2.new(0, 300, 0, 30)
-headerFrame.Position = UDim2.new(0, 0, 0, 0)
-headerFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Transparent white line color
-headerFrame.BackgroundTransparency = 0.8 -- Makes it mostly transparent
-headerFrame.BorderSizePixel = 0
-headerFrame.Parent = mainFrame
+# Function to simulate typing effect  
+def slow_type(text, delay=0.05):
+    for char in text:
+        print(char, end='', flush=True)
+        time.sleep(delay)
+    print()  # New line after typing
 
--- Add header text
-local headerText = Instance.new("TextLabel")
-headerText.Size = UDim2.new(0, 100, 1, 0) -- Small header spot
-headerText.Position = UDim2.new(0, 10, 0, 0)
-headerText.BackgroundTransparency = 1
-headerText.Text = "Bozo Hub"
-headerText.TextColor3 = Color3.fromRGB(0, 0, 0) -- Black text
-headerText.Font = Enum.Font.SourceSansBold
-headerText.TextSize = 20
-headerText.TextXAlignment = Enum.TextXAlignment.Left
-headerText.Parent = headerFrame
-
--- Create the Ultra Instinct Button
-local ultraInstinctButton = Instance.new("TextButton")
-ultraInstinctButton.Size = UDim2.new(0, 120, 0, 30) -- Small button
-ultraInstinctButton.Position = UDim2.new(1, -130, 0, 35) -- Right side under header
-ultraInstinctButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50) -- Dark grey color
-ultraInstinctButton.BorderColor3 = Color3.fromRGB(0, 0, 0) -- Black outline
-ultraInstinctButton.Text = "Ultra Instinct"
-ultraInstinctButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
-ultraInstinctButton.Font = Enum.Font.SourceSansBold
-ultraInstinctButton.TextSize = 18
-ultraInstinctButton.Parent = mainFrame
-
--- Curved corners for the button
-local buttonCorner = Instance.new("UICorner")
-buttonCorner.CornerRadius = UDim.new(0, 8)
-buttonCorner.Parent = ultraInstinctButton
-
--- Toggle functionality for Ultra Instinct
-local ultraInstinctActive = false
-local function toggleUltraInstinct()
-    ultraInstinctActive = not ultraInstinctActive
-    ultraInstinctButton.Text = ultraInstinctActive and "Active" or "Ultra Instinct"
-end
-
-ultraInstinctButton.MouseButton1Click:Connect(toggleUltraInstinct)
-
--- Ultra Instinct behavior
-game:GetService("RunService").Stepped:Connect(function()
-    if ultraInstinctActive then
-        local player = game.Players.LocalPlayer
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local humanoidRootPart = character.HumanoidRootPart
-            for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-                if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local distance = (humanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    if distance < 4 then
-                        local randomDirection = Vector3.new(math.random(-1, 1), 0, math.random(-1, 1)).unit * 5
-                        humanoidRootPart.CFrame = humanoidRootPart.CFrame + randomDirection
-                    end
-                end
-            end
-        end
-    end
-end)
+if __name__ == "__main__":
+    core_ability = choose_ability()
+    level = 1  # Starting level  
+    message_ability = f"Your core ability is: {core_ability}"
+    message_level = f"Your level is: {level}"
+    
+    slow_type(message_ability)
+    slow_type(message_level)
