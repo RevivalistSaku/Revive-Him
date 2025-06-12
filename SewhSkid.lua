@@ -1,158 +1,130 @@
--- Wait for game to load
-if not game:IsLoaded() then
-	game.Loaded:Wait()
+local a=game:GetService("Players")
+local b=a.LocalPlayer
+local c=game:GetService("ReplicatedStorage")
+local d=nil
+local e=nil
+for _,f in ipairs(c:GetDescendants())do
+    if f:IsA("ModuleScript")then
+        local g=f.Name:lower()
+        if(not d and(g:find("staminadrain")or g:find("module_6_upvr")))then
+            local h,i=pcall(require,f)
+            if h and type(i)=="table"and i.GetStaminaAfterDrain then d=i end
+        elseif(not e and(g:find("sprint")or g:find("module_8_upvr")))then
+            local j,k=pcall(require,f)
+            if j and type(k)=="table"and k.initialize and k.drainStamina then e=k end
+        end
+        if d and e then break end
+    end
 end
 
--- Services
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+local l=false
+local m
+local n
 
--- GUI Setup
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "SkidderGUI"
+local function o()
+    local p=b.Character or b.CharacterAdded:Wait()
+    local q=p:FindFirstChildOfClass("Humanoid")
+    if not q then return end
+    n=q.Health
+    m=q.HealthChanged:Connect(function(r)
+        if r<n then q.Health=n else n=r end
+    end)
+end
 
--- "Yo Skidder" Text
-local label = Instance.new("TextLabel", screenGui)
-label.Text = "Yo Skidder"
-label.Size = UDim2.new(0.5, 0, 0.1, 0)
-label.Position = UDim2.new(0.25, 0, 0.45, 0)
-label.BackgroundTransparency = 1
-label.TextScaled = true
-label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.Font = Enum.Font.GothamBold
+local function s()
+    if m then
+        m:Disconnect()
+        m=nil
+    end
+end
 
-task.delay(3, function()
-	label:Destroy()
+local t=false
+
+local function u()
+    if d and d.GetStaminaAfterDrain then
+        d.GetStaminaAfterDrain=function(_,_,_,_,v)return v end
+    end
+    if e and e.drainStamina then
+        e.drainStamina=function(...)end
+    end
+    if d and d.CancelExpires then
+        pcall(d.CancelExpires)
+    end
+end
+
+local w=d and d.GetStaminaAfterDrain
+local x=e and e.drainStamina
+
+local function y()
+    if d and w then d.GetStaminaAfterDrain=w end
+    if e and x then e.drainStamina=x end
+end
+
+local z=Instance.new("ScreenGui")
+z.Name="FeatureToggleGui"
+z.ResetOnSpawn=false
+z.Parent=b:WaitForChild("PlayerGui")
+
+local A=Instance.new("TextButton")
+A.Size=UDim2.new(0,120,0,35)
+A.Position=UDim2.new(0.5,-60,0,10)
+A.AnchorPoint=Vector2.new(0.5,0)
+A.Text="Show Features"
+A.BackgroundColor3=Color3.fromRGB(35,35,35)
+A.TextColor3=Color3.new(1,1,1)
+A.Parent=z
+
+local B=Instance.new("Frame")
+B.Size=UDim2.new(0,200,0,100)
+B.Position=UDim2.new(0.5,-100,0,50)
+B.AnchorPoint=Vector2.new(0.5,0)
+B.BackgroundColor3=Color3.fromRGB(25,25,25)
+B.Visible=false
+B.Parent=z
+
+local C=Instance.new("TextButton")
+C.Size=UDim2.new(1,-20,0,40)
+C.Position=UDim2.new(0,10,0,10)
+C.Text="Godmode OFF"
+C.BackgroundColor3=Color3.fromRGB(50,50,50)
+C.TextColor3=Color3.new(1,1,1)
+C.Parent=B
+
+local D=Instance.new("TextButton")
+D.Size=UDim2.new(1,-20,0,40)
+D.Position=UDim2.new(0,10,0,55)
+D.Text="Infinite Stamina OFF"
+D.BackgroundColor3=Color3.fromRGB(50,50,50)
+D.TextColor3=Color3.new(1,1,1)
+D.Parent=B
+
+A.MouseButton1Click:Connect(function()
+    B.Visible=not B.Visible
+    A.Text=B.Visible and"Hide Features"or"Show Features"
 end)
 
--- TopBar Toggle Button
-local topBar = Instance.new("Frame", screenGui)
-topBar.Size = UDim2.new(1, 0, 0, 40)
-topBar.Position = UDim2.new(0, 0, 0, 0)
-topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-topBar.Visible = true
-
-local toggleBtn = Instance.new("TextButton", topBar)
-toggleBtn.Text = "▼"
-toggleBtn.Size = UDim2.new(0, 40, 1, 0)
-toggleBtn.Position = UDim2.new(0, 0, 0, 0)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-
--- Main Panel
-local panel = Instance.new("Frame", screenGui)
-panel.Size = UDim2.new(0, 200, 0, 100)
-panel.Position = UDim2.new(0, 10, 0, 50)
-panel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-panel.Visible = true
-
--- Toggle visibility
-toggleBtn.MouseButton1Click:Connect(function()
-	panel.Visible = not panel.Visible
+C.MouseButton1Click:Connect(function()
+    l=not l
+    if l then
+        o()
+        C.Text="Godmode ON"
+        C.BackgroundColor3=Color3.fromRGB(0,170,0)
+    else
+        s()
+        C.Text="Godmode OFF"
+        C.BackgroundColor3=Color3.fromRGB(50,50,50)
+    end
 end)
 
--- Infinite Stamina Setup
-local staminaEnabled = false
-local originalStaminaFn = nil
-local originalSprintFn = nil
-
-local function toggleStamina()
-	staminaEnabled = not staminaEnabled
-
-	if staminaEnabled then
-		-- Scan for modules
-		local staminaDrainer, sprintHandler
-		for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
-			if obj:IsA("ModuleScript") then
-				local name = obj.Name:lower()
-				if not staminaDrainer and (name:find("staminadrain") or name:find("module_6_upvr")) then
-					local ok, mod = pcall(require, obj)
-					if ok and mod.GetStaminaAfterDrain then
-						staminaDrainer = mod
-					end
-				elseif not sprintHandler and (name:find("sprint") or name:find("module_8_upvr")) then
-					local ok, mod = pcall(require, obj)
-					if ok and mod.drainStamina then
-						sprintHandler = mod
-					end
-				end
-			end
-		end
-
-		-- Patch
-		if staminaDrainer then
-			originalStaminaFn = staminaDrainer.GetStaminaAfterDrain
-			staminaDrainer.GetStaminaAfterDrain = function(_, _, _, _, max)
-				return max
-			end
-		end
-		if sprintHandler then
-			originalSprintFn = sprintHandler.drainStamina
-			sprintHandler.drainStamina = function() end
-		end
-	else
-		-- Restore if possible
-		for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
-			if obj:IsA("ModuleScript") then
-				local name = obj.Name:lower()
-				local ok, mod = pcall(require, obj)
-				if ok then
-					if mod.GetStaminaAfterDrain and originalStaminaFn then
-						mod.GetStaminaAfterDrain = originalStaminaFn
-					end
-					if mod.drainStamina and originalSprintFn then
-						mod.drainStamina = originalSprintFn
-					end
-				end
-			end
-		end
-	end
-end
-
--- Health Lock Setup
-local godmodeEnabled = false
-local healthConn
-
-local function toggleGodmode()
-	godmodeEnabled = not godmodeEnabled
-
-	if godmodeEnabled then
-		local last = humanoid.Health
-		healthConn = humanoid.HealthChanged:Connect(function(h)
-			if h < last then
-				humanoid.Health = last
-			else
-				last = h
-			end
-		end)
-	else
-		if healthConn then
-			healthConn:Disconnect()
-		end
-	end
-end
-
--- Stamina Button
-local staminaBtn = Instance.new("TextButton", panel)
-staminaBtn.Text = "Toggle Infinite Stamina"
-staminaBtn.Size = UDim2.new(1, -10, 0, 40)
-staminaBtn.Position = UDim2.new(0, 5, 0, 5)
-staminaBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-staminaBtn.TextColor3 = Color3.new(1, 1, 1)
-staminaBtn.Font = Enum.Font.Gotham
-staminaBtn.TextScaled = true
-staminaBtn.MouseButton1Click:Connect(toggleStamina)
-
--- Godmode Button
-local godBtn = Instance.new("TextButton", panel)
-godBtn.Text = "Toggle Health Lock"
-godBtn.Size = UDim2.new(1, -10, 0, 40)
-godBtn.Position = UDim2.new(0, 5, 0, 55)
-godBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-godBtn.TextColor3 = Color3.new(1, 1, 1)
-godBtn.Font = Enum.Font.Gotham
-godBtn.TextScaled = true
-godBtn.MouseButton1Click:Connect(toggleGodmode)
+D.MouseButton1Click:Connect(function()
+    t=not t
+    if t then
+        u()
+        D.Text="Infinite Stamina ON"
+        D.BackgroundColor3=Color3.fromRGB(0,170,0)
+    else
+        y()
+        D.Text="Infinite Stamina OFF"
+        D.BackgroundColor3=Color3.fromRGB(50,50,50)
+    end
+end)
