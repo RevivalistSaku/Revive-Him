@@ -5,8 +5,8 @@ local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
    Name = "SewhSkids",
    Icon = 0,
-   LoadingTitle = "Rayfield Interface Suite",
-   LoadingSubtitle = "by Sleafyness",
+   LoadingTitle = "SewhSkids",
+   LoadingSubtitle = "By Soraify",
    Theme = "Default",
    ToggleUIKeybind = "K",
 
