@@ -1,30 +1,45 @@
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Load Rayfield UI
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
--- Fluent UI Setup
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+-- Create main window
+local Window = Rayfield:CreateWindow({
+   Name = "SewhSkids",
+   Icon = 0,
+   LoadingTitle = "Rayfield Interface Suite",
+   LoadingSubtitle = "by Sleafyness",
+   Theme = "Default",
+   ToggleUIKeybind = "K",
 
-local Window = Fluent:CreateWindow({
-    Title = "SewhSkids " .. Fluent.Version,
-    SubTitle = "by Sleafyness",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil,
+      FileName = "SewhSkidsHub"
+   },
+
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+
+   KeySystem = false,
+   KeySettings = {
+      Title = "SewhSkids",
+      Subtitle = "Key System",
+      Note = "",
+      FileName = "Key",
+      SaveKey = true,
+      GrabKeyFromSite = false,
+      Key = {"Hello"}
+   }
 })
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
-}
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
 
-local Options = Fluent.Options
-
--- Modules lookup
+-- Find stamina modules
 local staminaDrainer, sprintHandler
 for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
     if obj:IsA("ModuleScript") then
@@ -40,13 +55,16 @@ for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
                 sprintHandler = mod
             end
         end
-        if staminaDrainer and sprintHandler then break end
+        if staminaDrainer and sprintHandler then
+            break
+        end
     end
 end
 
 -- Godmode logic
+local godmodeEnabled = false
 local godConnection
-local lastHealth = 100
+local lastHealth
 
 local function enableGodmode()
     local character = player.Character or player.CharacterAdded:Wait()
@@ -70,13 +88,14 @@ local function disableGodmode()
     end
 end
 
--- Infinite Stamina logic
+-- Infinite stamina logic
+local staminaEnabled = false
 local originalGetStaminaAfterDrain = staminaDrainer and staminaDrainer.GetStaminaAfterDrain
 local originalDrainStamina = sprintHandler and sprintHandler.drainStamina
 
 local function enableStaminaPatch()
     if staminaDrainer and staminaDrainer.GetStaminaAfterDrain then
-        staminaDrainer.GetStaminaAfterDrain = function(_, _, _, _, maxStamina)
+        staminaDrainer.GetStaminaAfterDrain = function(identifier, x2, x3, isActive, maxStamina)
             return maxStamina
         end
     end
@@ -97,42 +116,34 @@ local function disableStaminaPatch()
     end
 end
 
--- GUI Toggles using Fluent
-local GodToggle = Tabs.Main:AddToggle("Godmode", {Title = "Godmode", Default = false})
-GodToggle:OnChanged(function(state)
-    if state then
-        enableGodmode()
-    else
-        disableGodmode()
-    end
-end)
+-- Create tab and section
+local Tab = Window:CreateTab("Main", "rewind")
+local Section = Tab:CreateSection("Features")
 
-local StaminaToggle = Tabs.Main:AddToggle("InfStam", {Title = "Infinite Stamina", Default = false})
-StaminaToggle:OnChanged(function(state)
-    if state then
-        enableStaminaPatch()
-    else
-        disableStaminaPatch()
-    end
-end)
-
--- Optional: Auto-notify
-Fluent:Notify({
-    Title = "SewhSkids",
-    Content = "The script has been loaded.",
-    Duration = 8
+-- Godmode toggle using Rayfield
+Tab:CreateToggle({
+   Name = "Godmode",
+   CurrentValue = false,
+   Callback = function(Value)
+      godmodeEnabled = Value
+      if Value then
+         enableGodmode()
+      else
+         disableGodmode()
+      end
+   end,
 })
 
--- Fluent Addons
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
-
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({})
-InterfaceManager:SetFolder("FluentScriptHub")
-SaveManager:SetFolder("FluentScriptHub/specific-game")
-
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
-Window:SelectTab(1)
-SaveManager:LoadAutoloadConfig()
+-- Infinite Stamina toggle using Rayfield
+Tab:CreateToggle({
+   Name = "Infinite Stamina",
+   CurrentValue = false,
+   Callback = function(Value)
+      staminaEnabled = Value
+      if Value then
+         enableStaminaPatch()
+      else
+         disableStaminaPatch()
+      end
+   end,
+})
