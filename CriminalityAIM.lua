@@ -8,7 +8,10 @@ local camera = workspace.CurrentCamera
 -- SETTINGS
 local MAX_DISTANCE = 300
 local PREDICTION = 0.10
-local FOV_RADIUS = 100 -- reduced size (pixels)
+local FOV_RADIUS = 100
+
+-- AIM PART MODE
+local AIM_PART = "HumanoidRootPart" -- default TORSO
 
 -- STATE
 local locked = false
@@ -21,7 +24,7 @@ local connection = nil
 local gui = Instance.new("ScreenGui")
 gui.Name = "CamlockGui"
 gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true -- 🔥 PERFECT CENTER (mobile + PC)
+gui.IgnoreGuiInset = true
 gui.Parent = player:WaitForChild("PlayerGui")
 
 --------------------------------------------------
@@ -38,99 +41,98 @@ button.Font = Enum.Font.GothamBold
 button.TextScaled = true
 button.Parent = gui
 
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(1, 0)
-btnCorner.Parent = button
+Instance.new("UICorner", button).CornerRadius = UDim.new(1, 0)
 
 --------------------------------------------------
--- FOV CIRCLE (PERFECTLY CENTERED)
+-- HEAD / TORSO TOGGLE BUTTON (SMALL RECTANGLE)
+--------------------------------------------------
+local partButton = Instance.new("TextButton")
+partButton.Size = UDim2.fromOffset(55, 20)
+partButton.Position = UDim2.new(1, -90, 0, 5)
+partButton.AnchorPoint = Vector2.new(1, 0)
+partButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+partButton.TextColor3 = Color3.new(1, 1, 1)
+partButton.Text = "TORSO"
+partButton.Font = Enum.Font.GothamBold
+partButton.TextScaled = true
+partButton.Parent = gui
+
+Instance.new("UICorner", partButton).CornerRadius = UDim.new(0, 6)
+
+--------------------------------------------------
+-- FOV CIRCLE
 --------------------------------------------------
 local fovCircle = Instance.new("Frame")
 fovCircle.Size = UDim2.fromOffset(FOV_RADIUS * 2, FOV_RADIUS * 2)
 fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
-fovCircle.Position = UDim2.fromScale(0.5, 0.5) -- exact center
+fovCircle.Position = UDim2.fromScale(0.5, 0.5)
 fovCircle.BackgroundTransparency = 1
 fovCircle.Parent = gui
 
-local fovCorner = Instance.new("UICorner")
-fovCorner.CornerRadius = UDim.new(1, 0)
-fovCorner.Parent = fovCircle
+Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
 
-local fovStroke = Instance.new("UIStroke")
-fovStroke.Color = Color3.fromRGB(255, 255, 255)
-fovStroke.Thickness = 2
-fovStroke.Transparency = 0.1
-fovStroke.Parent = fovCircle
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Transparency = 0.1
+stroke.Color = Color3.new(1, 1, 1)
+stroke.Parent = fovCircle
 
 --------------------------------------------------
--- FIND NEAREST PLAYER INSIDE FOV
+-- TARGET SEARCH (FOV)
 --------------------------------------------------
 local function getNearestFOVPlayer()
-	local viewport = camera.ViewportSize
-	local screenCenter = Vector2.new(viewport.X / 2, viewport.Y / 2)
-
-	local closestPlayer = nil
-	local closestDistance = math.huge
+	local center = camera.ViewportSize / 2
+	local closest, closestDist = nil, math.huge
 
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if plr ~= player and plr.Character then
-			local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+			local part = plr.Character:FindFirstChild(AIM_PART)
 			local hum = plr.Character:FindFirstChild("Humanoid")
+			if not part or not hum or hum.Health <= 0 then continue end
 
-			if hrp and hum and hum.Health > 0 then
-				local worldDist =
-					(hrp.Position - camera.CFrame.Position).Magnitude
-				if worldDist > MAX_DISTANCE then continue end
+			local dist = (part.Position - camera.CFrame.Position).Magnitude
+			if dist > MAX_DISTANCE then continue end
 
-				local screenPos, onScreen =
-					camera:WorldToViewportPoint(hrp.Position)
-				if not onScreen then continue end
+			local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
+			if not onScreen then continue end
 
-				local screenDistance =
-					(Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+			local screenDist =
+				(Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
 
-				if screenDistance <= FOV_RADIUS then
-					if worldDist < closestDistance then
-						closestDistance = worldDist
-						closestPlayer = plr
-					end
-				end
+			if screenDist <= FOV_RADIUS and dist < closestDist then
+				closestDist = dist
+				closest = plr
 			end
 		end
 	end
 
-	return closestPlayer
+	return closest
 end
 
 --------------------------------------------------
--- HARD CAMLOCK LOOP (NO SMOOTHING)
+-- HARD CAMLOCK
 --------------------------------------------------
 local function startCamlock()
 	connection = RunService.RenderStepped:Connect(function()
 		if not locked or not target or not target.Character then return end
 
-		local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+		local part = target.Character:FindFirstChild(AIM_PART)
 		local hum = target.Character:FindFirstChild("Humanoid")
-
-		if not hrp or not hum or hum.Health <= 0 then
+		if not part or not hum or hum.Health <= 0 then
 			locked = false
-			if connection then connection:Disconnect() end
+			connection:Disconnect()
 			return
 		end
 
-		-- 🔒 Instant snap with prediction
-		local predictedPos =
-			hrp.Position + (hrp.AssemblyLinearVelocity * PREDICTION)
+		local predicted =
+			part.Position + (part.AssemblyLinearVelocity * PREDICTION)
 
-		camera.CFrame = CFrame.new(
-			camera.CFrame.Position,
-			predictedPos
-		)
+		camera.CFrame = CFrame.new(camera.CFrame.Position, predicted)
 	end)
 end
 
 --------------------------------------------------
--- BUTTON TOGGLE
+-- AIM TOGGLE
 --------------------------------------------------
 button.MouseButton1Click:Connect(function()
 	if not locked then
@@ -142,8 +144,19 @@ button.MouseButton1Click:Connect(function()
 	else
 		locked = false
 		target = nil
-		if connection then
-			connection:Disconnect()
-		end
+		if connection then connection:Disconnect() end
+	end
+end)
+
+--------------------------------------------------
+-- HEAD / TORSO TOGGLE
+--------------------------------------------------
+partButton.MouseButton1Click:Connect(function()
+	if AIM_PART == "HumanoidRootPart" then
+		AIM_PART = "Head"
+		partButton.Text = "HEAD"
+	else
+		AIM_PART = "HumanoidRootPart"
+		partButton.Text = "TORSO"
 	end
 end)
