@@ -11,7 +11,9 @@ local mouse = player:GetMouse()
 -- SETTINGS
 local MAX_DISTANCE = 300
 local PREDICTION = 0.10
-local FOV_RADIUS = 100 -- MOBILE ONLY
+
+local FOV_MOBILE = 100
+local FOV_PC = 300
 
 -- STATE
 local locked = false
@@ -34,12 +36,12 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 --------------------------------------------------
--- MOBILE FOV ONLY
+-- FOV CIRCLE (MOBILE ONLY VISIBLE)
 --------------------------------------------------
 local fovCircle
 if IS_MOBILE then
 	fovCircle = Instance.new("Frame")
-	fovCircle.Size = UDim2.fromOffset(FOV_RADIUS * 2, FOV_RADIUS * 2)
+	fovCircle.Size = UDim2.fromOffset(FOV_MOBILE * 2, FOV_MOBILE * 2)
 	fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
 	fovCircle.Position = UDim2.fromScale(0.5, 0.5)
 	fovCircle.BackgroundTransparency = 1
@@ -98,7 +100,7 @@ if IS_MOBILE then
 end
 
 --------------------------------------------------
--- EXCLUSION HIGHLIGHT
+-- EXCLUSION
 --------------------------------------------------
 local function toggleExclude(plr)
 	if excluded[plr] then
@@ -122,59 +124,37 @@ local function toggleExclude(plr)
 end
 
 --------------------------------------------------
--- TARGETING
+-- TARGET SEARCH (FOV BASED FOR BOTH)
 --------------------------------------------------
 local function getTarget()
-	if IS_MOBILE then
-		-- MOBILE: FOV BASED
-		local center = camera.ViewportSize / 2
-		local closest, dist = nil, math.huge
+	local center = camera.ViewportSize / 2
+	local radius = IS_MOBILE and FOV_MOBILE or FOV_PC
 
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr ~= player and not excluded[plr] and plr.Character then
-				local part = plr.Character:FindFirstChild(AIM_PART)
-				local hum = plr.Character:FindFirstChild("Humanoid")
-				if not part or hum.Health <= 0 then continue end
+	local closest, closestDist = nil, math.huge
 
-				local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
-				if not onScreen then continue end
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player and not excluded[plr] and plr.Character then
+			local part = plr.Character:FindFirstChild(AIM_PART)
+			local hum = plr.Character:FindFirstChild("Humanoid")
+			if not part or hum.Health <= 0 then continue end
 
-				local mag = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-				if mag <= FOV_RADIUS then
-					local d = (part.Position - camera.CFrame.Position).Magnitude
-					if d < dist then
-						dist = d
-						closest = plr
-					end
-				end
+			local worldDist = (part.Position - camera.CFrame.Position).Magnitude
+			if worldDist > MAX_DISTANCE then continue end
+
+			local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
+			if not onScreen then continue end
+
+			local screenDist =
+				(Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+
+			if screenDist <= radius and worldDist < closestDist then
+				closestDist = worldDist
+				closest = plr
 			end
 		end
-		return closest
-	else
-		-- PC: CLOSEST PLAYER YOU ARE FACING (ENTIRE SCREEN)
-		local closest, bestDot = nil, -1
-		local camPos = camera.CFrame.Position
-		local camLook = camera.CFrame.LookVector
-
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr ~= player and not excluded[plr] and plr.Character then
-				local part = plr.Character:FindFirstChild(AIM_PART)
-				local hum = plr.Character:FindFirstChild("Humanoid")
-				if not part or hum.Health <= 0 then continue end
-
-				local dir = (part.Position - camPos)
-				local dist = dir.Magnitude
-				if dist > MAX_DISTANCE then continue end
-
-				local dot = camLook:Dot(dir.Unit)
-				if dot > bestDot then
-					bestDot = dot
-					closest = plr
-				end
-			end
-		end
-		return closest
 	end
+
+	return closest
 end
 
 --------------------------------------------------
@@ -275,14 +255,17 @@ else
 	-- PC HOLD TO LOCK
 	UserInputService.InputBegan:Connect(function(input, gp)
 		if gp then return end
+
 		if input.UserInputType == Enum.UserInputType.MouseButton2 then
 			target = getTarget()
 			if target then
 				locked = true
 				startCamlock()
 			end
+
 		elseif input.KeyCode == Enum.KeyCode.E then
 			toggleAimPart()
+
 		elseif input.KeyCode == Enum.KeyCode.X then
 			toggleSelect()
 		end
