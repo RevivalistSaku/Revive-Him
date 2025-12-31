@@ -22,8 +22,8 @@ local IS_MOBILE = UserInputService.TouchEnabled
 
 -- SELECTION STATE
 local selecting = false
-local excluded = {}        -- [Player] = true
-local highlights = {}      -- [Player] = Highlight
+local excluded = {}      -- [Player] = true
+local highlights = {}    -- [Player] = Highlight
 
 --------------------------------------------------
 -- GUI ROOT
@@ -84,7 +84,7 @@ if IS_MOBILE then
 	partButton.Parent = gui
 	Instance.new("UICorner", partButton).CornerRadius = UDim.new(0, 6)
 
-	-- SELECT (RIGHT OF HEAD/TORSO)
+	-- SELECT
 	selectButton = Instance.new("TextButton")
 	selectButton.Size = UDim2.fromOffset(55, 20)
 	selectButton.Position = UDim2.new(1, -150, 0, 5)
@@ -99,7 +99,7 @@ if IS_MOBILE then
 end
 
 --------------------------------------------------
--- PLAYER EXCLUSION (HIGHLIGHT)
+-- EXCLUDE PLAYER TOGGLE
 --------------------------------------------------
 local function toggleExclude(plr)
 	if excluded[plr] then
@@ -123,7 +123,7 @@ local function toggleExclude(plr)
 end
 
 --------------------------------------------------
--- TARGET SEARCH (REAL FOV + EXCLUSION)
+-- FIND TARGET (REAL FOV + EXCLUSION)
 --------------------------------------------------
 local function getNearestFOVPlayer()
 	local center = camera.ViewportSize / 2
@@ -160,20 +160,11 @@ end
 local function startCamlock()
 	connection = RunService.RenderStepped:Connect(function()
 		if not locked or not target or not target.Character then return end
-
-		if excluded[target] then
-			locked = false
-			connection:Disconnect()
-			return
-		end
+		if excluded[target] then return end
 
 		local part = target.Character:FindFirstChild(AIM_PART)
 		local hum = target.Character:FindFirstChild("Humanoid")
-		if not part or not hum or hum.Health <= 0 then
-			locked = false
-			connection:Disconnect()
-			return
-		end
+		if not part or not hum or hum.Health <= 0 then return end
 
 		local predicted =
 			part.Position + (part.AssemblyLinearVelocity * PREDICTION)
@@ -185,20 +176,6 @@ end
 --------------------------------------------------
 -- TOGGLES
 --------------------------------------------------
-local function toggleAim()
-	if not locked then
-		target = getNearestFOVPlayer()
-		if target then
-			locked = true
-			startCamlock()
-		end
-	else
-		locked = false
-		target = nil
-		if connection then connection:Disconnect() end
-	end
-end
-
 local function toggleAimPart()
 	if AIM_PART == "HumanoidRootPart" then
 		AIM_PART = "Head"
@@ -239,7 +216,7 @@ local function toggleSelect()
 end
 
 --------------------------------------------------
--- INPUT
+-- PLAYER CLICK (SELECTION MODE)
 --------------------------------------------------
 mouse.Button1Down:Connect(function()
 	if not selecting then return end
@@ -253,19 +230,58 @@ mouse.Button1Down:Connect(function()
 	end
 end)
 
+--------------------------------------------------
+-- INPUT
+--------------------------------------------------
 if IS_MOBILE then
-	aimButton.MouseButton1Click:Connect(toggleAim)
+	aimButton.MouseButton1Click:Connect(function()
+		if not locked then
+			target = getNearestFOVPlayer()
+			if target then
+				locked = true
+				startCamlock()
+			end
+		else
+			locked = false
+			target = nil
+			if connection then connection:Disconnect() end
+		end
+	end)
+
 	partButton.MouseButton1Click:Connect(toggleAimPart)
 	selectButton.MouseButton1Click:Connect(toggleSelect)
+
 else
+	-- PC HOLD TO LOCK
 	UserInputService.InputBegan:Connect(function(input, gp)
 		if gp then return end
+
 		if input.UserInputType == Enum.UserInputType.MouseButton2 then
-			toggleAim()
+			if not locked then
+				target = getNearestFOVPlayer()
+				if target then
+					locked = true
+					startCamlock()
+				end
+			end
+
 		elseif input.KeyCode == Enum.KeyCode.E then
 			toggleAimPart()
+
 		elseif input.KeyCode == Enum.KeyCode.X then
 			toggleSelect()
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input, gp)
+		if gp then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton2 then
+			locked = false
+			target = nil
+			if connection then
+				connection:Disconnect()
+				connection = nil
+			end
 		end
 	end)
 end
