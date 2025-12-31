@@ -11,46 +11,48 @@ local mouse = player:GetMouse()
 -- SETTINGS
 local MAX_DISTANCE = 300
 local PREDICTION = 0.10
-local FOV_RADIUS = 100
+local FOV_RADIUS = 100 -- MOBILE ONLY
 
 -- STATE
 local locked = false
 local target = nil
 local connection = nil
-local AIM_PART = "HumanoidRootPart" -- default TORSO
+local AIM_PART = "HumanoidRootPart"
 local IS_MOBILE = UserInputService.TouchEnabled
 
--- SELECTION STATE
+-- SELECTION
 local selecting = false
-local excluded = {}      -- [Player] = true
-local highlights = {}    -- [Player] = Highlight
+local excluded = {}
+local highlights = {}
 
 --------------------------------------------------
 -- GUI ROOT
 --------------------------------------------------
 local gui = Instance.new("ScreenGui")
-gui.Name = "CamlockGui"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 --------------------------------------------------
--- FOV CIRCLE (VISIBLE MOBILE / INVISIBLE PC)
+-- MOBILE FOV ONLY
 --------------------------------------------------
-local fovCircle = Instance.new("Frame")
-fovCircle.Size = UDim2.fromOffset(FOV_RADIUS * 2, FOV_RADIUS * 2)
-fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
-fovCircle.Position = UDim2.fromScale(0.5, 0.5)
-fovCircle.BackgroundTransparency = 1
-fovCircle.Parent = gui
+local fovCircle
+if IS_MOBILE then
+	fovCircle = Instance.new("Frame")
+	fovCircle.Size = UDim2.fromOffset(FOV_RADIUS * 2, FOV_RADIUS * 2)
+	fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+	fovCircle.Position = UDim2.fromScale(0.5, 0.5)
+	fovCircle.BackgroundTransparency = 1
+	fovCircle.Parent = gui
 
-Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
+	Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
 
-local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.Color = Color3.new(1, 1, 1)
-stroke.Transparency = IS_MOBILE and 0.1 or 1
-stroke.Parent = fovCircle
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Color = Color3.new(1, 1, 1)
+	stroke.Transparency = 0.1
+	stroke.Parent = fovCircle
+end
 
 --------------------------------------------------
 -- MOBILE UI
@@ -58,7 +60,6 @@ stroke.Parent = fovCircle
 local aimButton, partButton, selectButton
 
 if IS_MOBILE then
-	-- AIM
 	aimButton = Instance.new("TextButton")
 	aimButton.Size = UDim2.fromOffset(70, 70)
 	aimButton.Position = UDim2.new(1, -25, 0, 25)
@@ -66,12 +67,11 @@ if IS_MOBILE then
 	aimButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
 	aimButton.TextColor3 = Color3.new(0, 0, 0)
 	aimButton.Text = "AIM"
-	aimButton.Font = Enum.Font.GothamBold
 	aimButton.TextScaled = true
+	aimButton.Font = Enum.Font.GothamBold
 	aimButton.Parent = gui
 	Instance.new("UICorner", aimButton).CornerRadius = UDim.new(1, 0)
 
-	-- HEAD / TORSO
 	partButton = Instance.new("TextButton")
 	partButton.Size = UDim2.fromOffset(55, 20)
 	partButton.Position = UDim2.new(1, -90, 0, 5)
@@ -79,12 +79,11 @@ if IS_MOBILE then
 	partButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	partButton.TextColor3 = Color3.new(1, 1, 1)
 	partButton.Text = "TORSO"
-	partButton.Font = Enum.Font.GothamBold
 	partButton.TextScaled = true
+	partButton.Font = Enum.Font.GothamBold
 	partButton.Parent = gui
 	Instance.new("UICorner", partButton).CornerRadius = UDim.new(0, 6)
 
-	-- SELECT
 	selectButton = Instance.new("TextButton")
 	selectButton.Size = UDim2.fromOffset(55, 20)
 	selectButton.Position = UDim2.new(1, -150, 0, 5)
@@ -92,14 +91,14 @@ if IS_MOBILE then
 	selectButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	selectButton.TextColor3 = Color3.new(1, 1, 1)
 	selectButton.Text = "OFF"
-	selectButton.Font = Enum.Font.GothamBold
 	selectButton.TextScaled = true
+	selectButton.Font = Enum.Font.GothamBold
 	selectButton.Parent = gui
 	Instance.new("UICorner", selectButton).CornerRadius = UDim.new(0, 6)
 end
 
 --------------------------------------------------
--- EXCLUDE PLAYER TOGGLE
+-- EXCLUSION HIGHLIGHT
 --------------------------------------------------
 local function toggleExclude(plr)
 	if excluded[plr] then
@@ -123,39 +122,63 @@ local function toggleExclude(plr)
 end
 
 --------------------------------------------------
--- FIND TARGET (REAL FOV + EXCLUSION)
+-- TARGETING
 --------------------------------------------------
-local function getNearestFOVPlayer()
-	local center = camera.ViewportSize / 2
-	local closest, closestDist = nil, math.huge
+local function getTarget()
+	if IS_MOBILE then
+		-- MOBILE: FOV BASED
+		local center = camera.ViewportSize / 2
+		local closest, dist = nil, math.huge
 
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr ~= player and not excluded[plr] and plr.Character then
-			local part = plr.Character:FindFirstChild(AIM_PART)
-			local hum = plr.Character:FindFirstChild("Humanoid")
-			if not part or not hum or hum.Health <= 0 then continue end
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= player and not excluded[plr] and plr.Character then
+				local part = plr.Character:FindFirstChild(AIM_PART)
+				local hum = plr.Character:FindFirstChild("Humanoid")
+				if not part or hum.Health <= 0 then continue end
 
-			local worldDist = (part.Position - camera.CFrame.Position).Magnitude
-			if worldDist > MAX_DISTANCE then continue end
+				local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
+				if not onScreen then continue end
 
-			local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
-			if not onScreen then continue end
-
-			local screenDist =
-				(Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-
-			if screenDist <= FOV_RADIUS and worldDist < closestDist then
-				closestDist = worldDist
-				closest = plr
+				local mag = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+				if mag <= FOV_RADIUS then
+					local d = (part.Position - camera.CFrame.Position).Magnitude
+					if d < dist then
+						dist = d
+						closest = plr
+					end
+				end
 			end
 		end
-	end
+		return closest
+	else
+		-- PC: CLOSEST PLAYER YOU ARE FACING (ENTIRE SCREEN)
+		local closest, bestDot = nil, -1
+		local camPos = camera.CFrame.Position
+		local camLook = camera.CFrame.LookVector
 
-	return closest
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= player and not excluded[plr] and plr.Character then
+				local part = plr.Character:FindFirstChild(AIM_PART)
+				local hum = plr.Character:FindFirstChild("Humanoid")
+				if not part or hum.Health <= 0 then continue end
+
+				local dir = (part.Position - camPos)
+				local dist = dir.Magnitude
+				if dist > MAX_DISTANCE then continue end
+
+				local dot = camLook:Dot(dir.Unit)
+				if dot > bestDot then
+					bestDot = dot
+					closest = plr
+				end
+			end
+		end
+		return closest
+	end
 end
 
 --------------------------------------------------
--- HARD CAMLOCK
+-- CAMLOCK
 --------------------------------------------------
 local function startCamlock()
 	connection = RunService.RenderStepped:Connect(function()
@@ -164,11 +187,9 @@ local function startCamlock()
 
 		local part = target.Character:FindFirstChild(AIM_PART)
 		local hum = target.Character:FindFirstChild("Humanoid")
-		if not part or not hum or hum.Health <= 0 then return end
+		if not part or hum.Health <= 0 then return end
 
-		local predicted =
-			part.Position + (part.AssemblyLinearVelocity * PREDICTION)
-
+		local predicted = part.Position + part.AssemblyLinearVelocity * PREDICTION
 		camera.CFrame = CFrame.new(camera.CFrame.Position, predicted)
 	end)
 end
@@ -216,14 +237,13 @@ local function toggleSelect()
 end
 
 --------------------------------------------------
--- PLAYER CLICK (SELECTION MODE)
+-- PLAYER CLICK (SELECTION)
 --------------------------------------------------
 mouse.Button1Down:Connect(function()
 	if not selecting then return end
-	local tgt = mouse.Target
-	if not tgt then return end
-
-	local char = tgt:FindFirstAncestorOfClass("Model")
+	local t = mouse.Target
+	if not t then return end
+	local char = t:FindFirstAncestorOfClass("Model")
 	local plr = char and Players:GetPlayerFromCharacter(char)
 	if plr and plr ~= player then
 		toggleExclude(plr)
@@ -236,7 +256,7 @@ end)
 if IS_MOBILE then
 	aimButton.MouseButton1Click:Connect(function()
 		if not locked then
-			target = getNearestFOVPlayer()
+			target = getTarget()
 			if target then
 				locked = true
 				startCamlock()
@@ -255,19 +275,14 @@ else
 	-- PC HOLD TO LOCK
 	UserInputService.InputBegan:Connect(function(input, gp)
 		if gp then return end
-
 		if input.UserInputType == Enum.UserInputType.MouseButton2 then
-			if not locked then
-				target = getNearestFOVPlayer()
-				if target then
-					locked = true
-					startCamlock()
-				end
+			target = getTarget()
+			if target then
+				locked = true
+				startCamlock()
 			end
-
 		elseif input.KeyCode == Enum.KeyCode.E then
 			toggleAimPart()
-
 		elseif input.KeyCode == Enum.KeyCode.X then
 			toggleSelect()
 		end
