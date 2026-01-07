@@ -38,9 +38,8 @@ gui.Parent = player:WaitForChild("PlayerGui")
 --------------------------------------------------
 -- FOV CIRCLE (MOBILE ONLY VISIBLE)
 --------------------------------------------------
-local fovCircle
 if IS_MOBILE then
-	fovCircle = Instance.new("Frame")
+	local fovCircle = Instance.new("Frame")
 	fovCircle.Size = UDim2.fromOffset(FOV_MOBILE * 2, FOV_MOBILE * 2)
 	fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
 	fovCircle.Position = UDim2.fromScale(0.5, 0.5)
@@ -124,12 +123,11 @@ local function toggleExclude(plr)
 end
 
 --------------------------------------------------
--- TARGET SEARCH (FOV BASED FOR BOTH)
+-- TARGET SEARCH (FOV BASED)
 --------------------------------------------------
 local function getTarget()
 	local center = camera.ViewportSize / 2
 	local radius = IS_MOBILE and FOV_MOBILE or FOV_PC
-
 	local closest, closestDist = nil, math.huge
 
 	for _, plr in ipairs(Players:GetPlayers()) do
@@ -144,9 +142,7 @@ local function getTarget()
 			local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
 			if not onScreen then continue end
 
-			local screenDist =
-				(Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-
+			local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
 			if screenDist <= radius and worldDist < closestDist then
 				closestDist = worldDist
 				closest = plr
@@ -252,15 +248,24 @@ if IS_MOBILE then
 	selectButton.MouseButton1Click:Connect(toggleSelect)
 
 else
-	-- PC HOLD TO LOCK
+	-- PC TOGGLE AIM (C)
 	UserInputService.InputBegan:Connect(function(input, gp)
 		if gp then return end
 
-		if input.UserInputType == Enum.UserInputType.MouseButton2 then
-			target = getTarget()
-			if target then
-				locked = true
-				startCamlock()
+		if input.KeyCode == Enum.KeyCode.C then
+			if not locked then
+				target = getTarget()
+				if target then
+					locked = true
+					startCamlock()
+				end
+			else
+				locked = false
+				target = nil
+				if connection then
+					connection:Disconnect()
+					connection = nil
+				end
 			end
 
 		elseif input.KeyCode == Enum.KeyCode.E then
@@ -268,18 +273,6 @@ else
 
 		elseif input.KeyCode == Enum.KeyCode.X then
 			toggleSelect()
-		end
-	end)
-
-	UserInputService.InputEnded:Connect(function(input, gp)
-		if gp then return end
-		if input.UserInputType == Enum.UserInputType.MouseButton2 then
-			locked = false
-			target = nil
-			if connection then
-				connection:Disconnect()
-				connection = nil
-			end
 		end
 	end)
 end
