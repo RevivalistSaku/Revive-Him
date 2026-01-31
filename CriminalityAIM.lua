@@ -54,18 +54,18 @@ end
 Players.PlayerAdded:Connect(createPlayerESP)
 
 --------------------------------------------------
--- COMPUTER ESP (MODIFIED)
+-- COMPUTER ESP (OUTLINE ONLY)
 --------------------------------------------------
 local function createComputerESP(model)
 	if not model:IsA("Model") or model.Name ~= "Computer" then return end
 
-	-- Highlight (MORE TRANSPARENT)
+	-- Highlight (OUTLINE ONLY)
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "ComputerESP"
 	highlight.Adornee = model
-	highlight.FillColor = Color3.fromRGB(255, 255, 0)
-	highlight.FillTransparency = 0.55 -- << more transparent
-	highlight.OutlineTransparency = 1
+	highlight.FillTransparency = 1 -- no fill at all
+	highlight.OutlineTransparency = 0
+	highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
 	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	highlight.Parent = model
 
@@ -75,7 +75,7 @@ local function createComputerESP(model)
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "ProgressESP"
 	gui.Adornee = primary
-	gui.Size = UDim2.fromScale(6, 1.6) -- << larger but not obnoxious
+	gui.Size = UDim2.fromScale(6, 1.6)
 	gui.StudsOffset = Vector3.new(0, 3.5, 0)
 	gui.AlwaysOnTop = true
 	gui.Parent = model
@@ -92,7 +92,7 @@ local function createComputerESP(model)
 	local function updateText()
 		local progress = model:GetAttribute("Progress")
 		if typeof(progress) == "number" then
-			label.Text = "Progress: " .. math.floor(progress) -- << whole numbers only
+			label.Text = "Progress: " .. math.floor(progress)
 		else
 			label.Text = "Progress: ?"
 		end
