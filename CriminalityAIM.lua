@@ -5,13 +5,12 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 
 --------------------------------------------------
--- PLAYER ESP
+-- PLAYER ESP (UNCHANGED)
 --------------------------------------------------
 local function createPlayerESP(player)
 	if player == LocalPlayer then return end
 
 	local function onCharacter(char)
-		-- Highlight
 		local highlight = Instance.new("Highlight")
 		highlight.Name = "PlayerESP"
 		highlight.Adornee = char
@@ -21,7 +20,6 @@ local function createPlayerESP(player)
 		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		highlight.Parent = char
 
-		-- Username Billboard
 		local head = char:WaitForChild("Head", 5)
 		if not head then return end
 
@@ -56,30 +54,29 @@ end
 Players.PlayerAdded:Connect(createPlayerESP)
 
 --------------------------------------------------
--- COMPUTER ESP
+-- COMPUTER ESP (MODIFIED)
 --------------------------------------------------
 local function createComputerESP(model)
 	if not model:IsA("Model") or model.Name ~= "Computer" then return end
 
-	-- Highlight
+	-- Highlight (MORE TRANSPARENT)
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "ComputerESP"
 	highlight.Adornee = model
 	highlight.FillColor = Color3.fromRGB(255, 255, 0)
-	highlight.FillTransparency = 0
+	highlight.FillTransparency = 0.55 -- << more transparent
 	highlight.OutlineTransparency = 1
 	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	highlight.Parent = model
 
-	-- Billboard
 	local primary = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
 	if not primary then return end
 
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "ProgressESP"
 	gui.Adornee = primary
-	gui.Size = UDim2.fromScale(4, 1)
-	gui.StudsOffset = Vector3.new(0, 3, 0)
+	gui.Size = UDim2.fromScale(6, 1.6) -- << larger but not obnoxious
+	gui.StudsOffset = Vector3.new(0, 3.5, 0)
 	gui.AlwaysOnTop = true
 	gui.Parent = model
 
@@ -94,7 +91,11 @@ local function createComputerESP(model)
 
 	local function updateText()
 		local progress = model:GetAttribute("Progress")
-		label.Text = "Progress: " .. tostring(progress)
+		if typeof(progress) == "number" then
+			label.Text = "Progress: " .. math.floor(progress) -- << whole numbers only
+		else
+			label.Text = "Progress: ?"
+		end
 	end
 
 	updateText()
